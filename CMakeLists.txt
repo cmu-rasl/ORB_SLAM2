@@ -109,6 +109,13 @@ add_executable(stereo_kitti
 Examples/Stereo/stereo_kitti.cc)
 target_link_libraries(stereo_kitti ORB_SLAM2)
 
+add_executable(stereo_euroc
+Examples/Stereo/stereo_euroc.cc)
+target_link_libraries(stereo_euroc ${PROJECT_NAME})
+
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/Examples/Monocular)
+
 add_executable(mono_tum
 Examples/Monocular/mono_tum.cc)
 target_link_libraries(mono_tum ORB_SLAM2)
@@ -123,4 +130,7 @@ install(TARGETS
     mono_tum
     mono_kitti
   RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
+add_executable(mono_euroc
+Examples/Monocular/mono_euroc.cc)
+target_link_libraries(mono_euroc ${PROJECT_NAME})
 
