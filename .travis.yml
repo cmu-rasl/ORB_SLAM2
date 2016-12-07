@@ -1,0 +1,27 @@
+language: cpp
+sudo: false
+dist: trusty
+addons:
+  apt:
+    packages:
+    - build-essential
+    - git
+    - wget
+    - libblas-dev
+    - liblapack-dev
+    - libopencv-dev
+    - libeigen3-dev
+
+branches:
+    only:
+        - multiplatform
+compiler:
+    - gcc
+before_script:
+    - wget -q --no-check-certificate https://cmake.org/files/v3.7/cmake-3.7.1-Linux-x86_64.tar.gz
+    - tar xzf cmake-3.7.1-Linux-x86_64.tar.gz > /dev/null
+    - export CMAKE_BIN=$PWD/cmake-3.7.1-Linux-x86_64/bin/cmake
+    - mkdir -p build/debug build/release src/
+    - cd ./build/debug
+    - $CMAKE_BIN $TRAVIS_BUILD_DIR -DCMAKE_INSTALL_PREFIX:PATH=../../install/debug -DCMAKE_PREFIX_PATH:PATH=../../install/debug -DPangolin_DIR:PATH=../../install/debug -DCMAKE_BUILD_TYPE:STRING=DEBUG
+script: make install
