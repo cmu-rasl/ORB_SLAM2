@@ -44,7 +44,6 @@ find_package(Eigen3 3.1.0 REQUIRED)
 add_subdirectory(${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/)
 # g2o target
 add_subdirectory(${PROJECT_SOURCE_DIR}/Thirdparty/g2o/)
-install(EXPORT ORB_SLAM2-targets DESTINATION share/${PROJECT_NAME})
 
 add_library(ORB_SLAM2 SHARED
 src/System.cc
