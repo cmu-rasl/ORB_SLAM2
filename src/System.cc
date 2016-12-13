@@ -23,7 +23,9 @@
 #include "System.h"
 #include "Converter.h"
 #include <thread>
-#include <pangolin/pangolin.h>
+#ifdef USE_VIEWER
+    #include <pangolin/pangolin.h>
+#endif
 #include <iomanip>
 #include <chrono>
 #include <thread>
@@ -79,14 +81,21 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     //Create the Map
     mpMap = new Map();
 
-    //Create Drawers. These are used by the Viewer
-    mpFrameDrawer = new FrameDrawer(mpMap);
-    mpMapDrawer = new MapDrawer(mpMap, strSettingsFile);
+    #ifdef USE_VIEWER
+        //Create Drawers. These are used by the Viewer
+        mpFrameDrawer = new FrameDrawer(mpMap);
+        mpMapDrawer = new MapDrawer(mpMap, strSettingsFile);
+    #endif
 
     //Initialize the Tracking thread
     //(it will live in the main thread of execution, the one that called this constructor)
-    mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
-                             mpMap, mpKeyFrameDatabase, strSettingsFile, mSensor);
+    #ifdef USE_VIEWER
+        mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
+                            mpMap, mpKeyFrameDatabase, strSettingsFile, mSensor);
+    #else
+        mpTracker = new Tracking(this, mpVocabulary, mpMap, mpKeyFrameDatabase, 
+                            strSettingsFile, mSensor);
+    #endif
 
     //Initialize the Local Mapping thread and launch
     mpLocalMapper = new LocalMapping(mpMap, mSensor==MONOCULAR);
@@ -96,13 +105,14 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
     mpLoopCloser = new LoopClosing(mpMap, mpKeyFrameDatabase, mpVocabulary, mSensor!=MONOCULAR);
     mptLoopClosing = new thread(&ORB_SLAM2::LoopClosing::Run, mpLoopCloser);
 
-    //Initialize the Viewer thread and launch
-    mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile);
-    if(bUseViewer)
-        mptViewer = new thread(&Viewer::Run, mpViewer);
+    #ifdef USE_VIEWER
+        //Initialize the Viewer thread and launch
+        mpViewer = new Viewer(this, mpFrameDrawer,mpMapDrawer,mpTracker,strSettingsFile);
+        if(bUseViewer)
+            mptViewer = new thread(&Viewer::Run, mpViewer);
 
-    mpTracker->SetViewer(mpViewer);
-
+        mpTracker->SetViewer(mpViewer);
+    #endif
     //Set pointers between threads
     mpTracker->SetLocalMapper(mpLocalMapper);
     mpTracker->SetLoopClosing(mpLoopCloser);
@@ -271,16 +281,22 @@ void System::Shutdown()
 {
     mpLocalMapper->RequestFinish();
     mpLoopCloser->RequestFinish();
-    mpViewer->RequestFinish();
+    #ifdef USE_VIEWER
+        mpViewer->RequestFinish();
+    #endif
 
     // Wait until all thread have effectively stopped
     while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished()  ||
-          !mpViewer->isFinished()      || mpLoopCloser->isRunningGBA())
+        #ifdef USE_VIEWER
+            !mpViewer->isFinished() ||
+        #endif
+            mpLoopCloser->isRunningGBA())
     {
         std::this_thread::sleep_for(std::chrono::microseconds(5000));
     }
-
+#ifdef USE_VIEWER
     pangolin::BindToContext("ORB-SLAM2: Map Viewer");
+#endif
 }
 
 void System::SaveTrajectoryTUM(const string &filename)

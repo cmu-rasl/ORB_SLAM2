@@ -25,7 +25,9 @@
 #include<opencv2/features2d/features2d.hpp>
 
 #include"ORBmatcher.h"
-#include"FrameDrawer.h"
+#ifdef USE_VIEWER
+    #include"FrameDrawer.h"
+#endif
 #include"Converter.h"
 #include"Map.h"
 #include"Initializer.h"
@@ -43,11 +45,17 @@ using namespace std;
 
 namespace ORB_SLAM2
 {
-
+#ifdef USE_VIEWER
 Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Map *pMap, KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor):
     mState(NO_IMAGES_YET), mSensor(sensor), mbOnlyTracking(false), mbVO(false), mpORBVocabulary(pVoc),
     mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer*>(NULL)), mpSystem(pSys),
     mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpMap(pMap), mnLastRelocFrameId(0)
+#else
+    Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, Map *pMap, KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor):
+    mState(NO_IMAGES_YET), mSensor(sensor), mbOnlyTracking(false), mbVO(false), mpORBVocabulary(pVoc),
+    mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer*>(NULL)), mpSystem(pSys),
+    mpMap(pMap), mnLastRelocFrameId(0)
+#endif
 {
     // Load camera parameters from settings file
 
@@ -159,10 +167,12 @@ void Tracking::SetLoopClosing(LoopClosing *pLoopClosing)
     mpLoopClosing=pLoopClosing;
 }
 
-void Tracking::SetViewer(Viewer *pViewer)
-{
-    mpViewer=pViewer;
-}
+#ifdef USE_VIEWER
+    void Tracking::SetViewer(Viewer *pViewer)
+    {
+        mpViewer=pViewer;
+    }
+#endif
 
 
 cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp)
@@ -283,8 +293,9 @@ void Tracking::Track()
             StereoInitialization();
         else
             MonocularInitialization();
-
-        mpFrameDrawer->Update(this);
+        #ifdef USE_VIEWER
+            mpFrameDrawer->Update(this);
+        #endif
 
         if(mState!=OK)
             return;
@@ -415,8 +426,10 @@ void Tracking::Track()
         else
             mState=LOST;
 
-        // Update drawer
-        mpFrameDrawer->Update(this);
+        #ifdef USE_VIEWER
+            // Update drawer
+            mpFrameDrawer->Update(this);
+        #endif
 
         // If tracking were good, check if we insert a keyframe
         if(bOK)
@@ -431,8 +444,9 @@ void Tracking::Track()
             }
             else
                 mVelocity = cv::Mat();
-
-            mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
+            #ifdef USE_VIEWER
+                mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
+            #endif
 
             // Clean VO matches
             for(int i=0; i<mCurrentFrame.N; i++)
@@ -554,8 +568,9 @@ void Tracking::StereoInitialization()
         mpMap->SetReferenceMapPoints(mvpLocalMapPoints);
 
         mpMap->mvpKeyFrameOrigins.push_back(pKFini);
-
-        mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
+        #ifdef USE_VIEWER
+            mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
+        #endif
 
         mState=OK;
     }
@@ -729,8 +744,9 @@ void Tracking::CreateInitialMapMonocular()
     mLastFrame = Frame(mCurrentFrame);
 
     mpMap->SetReferenceMapPoints(mvpLocalMapPoints);
-
-    mpMapDrawer->SetCurrentCameraPose(pKFcur->GetPose());
+    #ifdef USE_VIEWER
+        mpMapDrawer->SetCurrentCameraPose(pKFcur->GetPose());
+    #endif
 
     mpMap->mvpKeyFrameOrigins.push_back(pKFini);
 
@@ -1504,11 +1520,15 @@ bool Tracking::Relocalization()
 
 void Tracking::Reset()
 {
-    mpViewer->RequestStop();
+    #ifdef USE_VIEWER
+        mpViewer->RequestStop();
+    #endif
 
     cout << "System Reseting" << endl;
-    while(!mpViewer->isStopped())
-        std::this_thread::sleep_for(std::chrono::microseconds(3000));
+    #ifdef USE_VIEWER
+        while(!mpViewer->isStopped())
+            std::this_thread::sleep_for(std::chrono::microseconds(3000));
+    #endif
 
     // Reset Local Mapping
     cout << "Reseting Local Mapper...";
@@ -1543,7 +1563,9 @@ void Tracking::Reset()
     mlFrameTimes.clear();
     mlbLost.clear();
 
-    mpViewer->Release();
+    #ifdef USE_VIEWER
+        mpViewer->Release();
+    #endif
 }
 
 void Tracking::ChangeCalibration(const string &strSettingPath)

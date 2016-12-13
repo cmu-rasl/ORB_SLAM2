@@ -28,20 +28,25 @@
 
 #include "Tracking.h"
 #include "FrameDrawer.h"
-#include "MapDrawer.h"
+#ifdef USE_VIEWER
+    #include "MapDrawer.h"
+#endif
 #include "Map.h"
 #include "LocalMapping.h"
 #include "LoopClosing.h"
 #include "KeyFrameDatabase.h"
 #include "ORBVocabulary.h"
-#include "Viewer.h"
+#ifdef USE_VIEWER
+    #include "Viewer.h"
+#endif
 #include "orb_slam2_export.h"
 
 namespace ORB_SLAM2
 {
-
+#ifdef USE_VIEWER
 class Viewer;
 class FrameDrawer;
+#endif
 class Map;
 class Tracking;
 class LocalMapping;
@@ -139,17 +144,21 @@ private:
     // a pose graph optimization and full bundle adjustment (in a new thread) afterwards.
     LoopClosing* mpLoopCloser;
 
-    // The viewer draws the map and the current camera pose. It uses Pangolin.
-    Viewer* mpViewer;
+    #ifdef USE_VIEWER
+        // The viewer draws the map and the current camera pose. It uses Pangolin.
+        Viewer* mpViewer;
 
-    FrameDrawer* mpFrameDrawer;
-    MapDrawer* mpMapDrawer;
+        FrameDrawer* mpFrameDrawer;
+        MapDrawer* mpMapDrawer;
+    #endif
 
     // System threads: Local Mapping, Loop Closing, Viewer.
     // The Tracking thread "lives" in the main execution thread that creates the System object.
     std::thread* mptLocalMapping;
     std::thread* mptLoopClosing;
-    std::thread* mptViewer;
+    #ifdef USE_VIEWER
+        std::thread* mptViewer;
+    #endif
 
     // Reset flag
     std::mutex mMutexReset;

@@ -7,10 +7,16 @@ endif()
 
 message("Build type: " ${CMAKE_BUILD_TYPE})
 
+#Make using OpenGL optional
+option(USE_VIEWER "Build with OpenGL support and MapViewer" ON)
+if(USE_VIEWER)
+  add_definitions(-DUSE_VIEWER)
+endif()
+
 if(UNIX)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native ")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3 -march=native")
-    
+
     # Check C++11 or C++0x support
     include(CheckCXXCompilerFlag)
 
@@ -36,7 +42,10 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 
-find_package(Pangolin REQUIRED)
+if(USE_VIEWER)
+  find_package(Pangolin REQUIRED)
+endif(USE_VIEWER)
+
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 3.1.0 REQUIRED)
 
@@ -45,45 +54,80 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/)
 # g2o target
 add_subdirectory(${PROJECT_SOURCE_DIR}/Thirdparty/g2o/)
 
-add_library(ORB_SLAM2 SHARED
-src/System.cc
-src/Tracking.cc
-src/LocalMapping.cc
-src/LoopClosing.cc
-src/ORBextractor.cc
-src/ORBmatcher.cc
-src/FrameDrawer.cc
-src/Converter.cc
-src/MapPoint.cc
-src/KeyFrame.cc
-src/Map.cc
-src/MapDrawer.cc
-src/Optimizer.cc
-src/PnPsolver.cc
-src/Frame.cc
-src/KeyFrameDatabase.cc
-src/Sim3Solver.cc
-src/Initializer.cc
-src/Viewer.cc
-)
+if(USE_VIEWER)
+  add_library(ORB_SLAM2 SHARED
+  src/System.cc
+  src/Tracking.cc
+  src/LocalMapping.cc
+  src/LoopClosing.cc
+  src/ORBextractor.cc
+  src/ORBmatcher.cc
+  src/FrameDrawer.cc
+  src/Converter.cc
+  src/MapPoint.cc
+  src/KeyFrame.cc
+  src/Map.cc
+  src/MapDrawer.cc
+  src/Optimizer.cc
+  src/PnPsolver.cc
+  src/Frame.cc
+  src/KeyFrameDatabase.cc
+  src/Sim3Solver.cc
+  src/Initializer.cc
+  src/Viewer.cc
+  )
 
-target_include_directories(ORB_SLAM2 PUBLIC
-${PROJECT_SOURCE_DIR}
-${PROJECT_SOURCE_DIR}/include
-${OpenCV_INCLUDE_DIRS}
-${EIGEN3_INCLUDE_DIR}
-${Pangolin_INCLUDE_DIR}
-${PROJECT_BINARY_DIR}
-)
+  target_include_directories(ORB_SLAM2 PUBLIC
+  ${PROJECT_SOURCE_DIR}
+  ${PROJECT_SOURCE_DIR}/include
+  ${OpenCV_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
+  ${Pangolin_INCLUDE_DIR}
+  ${PROJECT_BINARY_DIR}
+  )
 
-target_link_libraries(ORB_SLAM2
-${OpenCV_LIBS}
-${EIGEN3_LIBS}
-${Pangolin_LIBRARIES}
-DBoW2
-g2o
-)
+  target_link_libraries(ORB_SLAM2
+  ${OpenCV_LIBS}
+  ${EIGEN3_LIBS}
+  ${Pangolin_LIBRARIES}
+  DBoW2
+  g2o
+  )
+else(USE_VIEWER)
+  add_library(ORB_SLAM2 SHARED
+  src/System.cc
+  src/Tracking.cc
+  src/LocalMapping.cc
+  src/LoopClosing.cc
+  src/ORBextractor.cc
+  src/ORBmatcher.cc
+  src/Converter.cc
+  src/MapPoint.cc
+  src/KeyFrame.cc
+  src/Map.cc
+  src/Optimizer.cc
+  src/PnPsolver.cc
+  src/Frame.cc
+  src/KeyFrameDatabase.cc
+  src/Sim3Solver.cc
+  src/Initializer.cc
+  )
 
+  target_include_directories(ORB_SLAM2 PUBLIC
+  ${PROJECT_SOURCE_DIR}
+  ${PROJECT_SOURCE_DIR}/include
+  ${OpenCV_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
+  ${PROJECT_BINARY_DIR}
+  )
+
+  target_link_libraries(ORB_SLAM2
+  ${OpenCV_LIBS}
+  ${EIGEN3_LIBS}
+  DBoW2
+  g2o
+  )
+endif(USE_VIEWER)
 include(GenerateExportHeader)
 set_target_properties(ORB_SLAM2 PROPERTIES CXX_VISIBILITY_PRESET hidden)
 set_target_properties(ORB_SLAM2 PROPERTIES VISIBILITY_INLINES_HIDDEN 1)

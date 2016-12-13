@@ -25,8 +25,10 @@
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
 
-#include"Viewer.h"
-#include"FrameDrawer.h"
+#ifdef USE_VIEWER
+    #include"Viewer.h"
+    #include"FrameDrawer.h"
+#endif
 #include"Map.h"
 #include"LocalMapping.h"
 #include"LoopClosing.h"
@@ -35,7 +37,9 @@
 #include"KeyFrameDatabase.h"
 #include"ORBextractor.h"
 #include "Initializer.h"
-#include "MapDrawer.h"
+#ifdef USE_VIEWER
+    #include "MapDrawer.h"
+#endif
 #include "System.h"
 #include "orb_slam2_export.h"
 
@@ -44,8 +48,10 @@
 namespace ORB_SLAM2
 {
 
-class Viewer;
-class FrameDrawer;
+#ifdef USE_VIEWER
+    class Viewer;
+    class FrameDrawer;
+#endif
 class Map;
 class LocalMapping;
 class LoopClosing;
@@ -55,8 +61,13 @@ class ORB_SLAM2_EXPORT Tracking
 {  
 
 public:
+    #ifdef USE_VIEWER
     Tracking(System* pSys, ORBVocabulary* pVoc, FrameDrawer* pFrameDrawer, MapDrawer* pMapDrawer, Map* pMap,
              KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor);
+    #else
+    Tracking(System* pSys, ORBVocabulary* pVoc, Map* pMap,
+             KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor);
+    #endif
 
     // Preprocess the input and call Track(). Extract features and performs stereo matching.
     cv::Mat GrabImageStereo(const cv::Mat &imRectLeft,const cv::Mat &imRectRight, const double &timestamp);
@@ -65,7 +76,9 @@ public:
 
     void SetLocalMapper(LocalMapping* pLocalMapper);
     void SetLoopClosing(LoopClosing* pLoopClosing);
-    void SetViewer(Viewer* pViewer);
+    #ifdef USE_VIEWER
+        void SetViewer(Viewer* pViewer);
+    #endif
 
     // Load new settings
     // The focal lenght should be similar or scale prediction will fail when projecting points
@@ -174,10 +187,12 @@ protected:
     // System
     System* mpSystem;
     
-    //Drawers
-    Viewer* mpViewer;
-    FrameDrawer* mpFrameDrawer;
-    MapDrawer* mpMapDrawer;
+    #ifdef USE_VIEWER
+        //Drawers
+        Viewer* mpViewer;
+        FrameDrawer* mpFrameDrawer;
+        MapDrawer* mpMapDrawer;
+    #endif
 
     //Map
     Map* mpMap;
