@@ -48,7 +48,7 @@ namespace ORB_SLAM2
 #ifdef USE_VIEWER
 Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Map *pMap, KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor):
     mState(NO_IMAGES_YET), mSensor(sensor), mbOnlyTracking(false), mbVO(false), mpORBVocabulary(pVoc),
-    mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer*>(NULL)), mpSystem(pSys),
+    mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer*>(NULL)), mpSystem(pSys), mpViewer(NULL),
     mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpMap(pMap), mnLastRelocFrameId(0)
 #else
     Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, Map *pMap, KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor):
@@ -1526,8 +1526,12 @@ void Tracking::Reset()
 
     cout << "System Reseting" << endl;
     #ifdef USE_VIEWER
+    if(mpViewer)
+    {
+        mpViewer->RequestStop();
         while(!mpViewer->isStopped())
-            std::this_thread::sleep_for(std::chrono::microseconds(3000));
+            usleep(3000);
+    }
     #endif
 
     // Reset Local Mapping
@@ -1564,6 +1568,7 @@ void Tracking::Reset()
     mlbLost.clear();
 
     #ifdef USE_VIEWER
+    if(mpViewer)
         mpViewer->Release();
     #endif
 }
