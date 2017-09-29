@@ -32,7 +32,7 @@
 
 namespace ORB_SLAM2 {
 
-class ExtractorNode
+class ORB_SLAM2_EXPORT ExtractorNode
 {
 public:
     ExtractorNode():bNoMore(false){}

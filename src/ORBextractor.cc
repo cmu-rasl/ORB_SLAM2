@@ -67,6 +67,9 @@
 #include <cuda/Fast.hpp>
 #include <cuda/Orb.hpp>
 #include <Utils.hpp>
+#include <vector>
+#include <iterator>
+
 
 using namespace cv;
 using namespace std;

@@ -24,6 +24,7 @@
 #include"KeyFrame.h"
 #include"Frame.h"
 #include"Map.h"
+#include"orb_slam2_export.h"
 
 #include<opencv2/core/core.hpp>
 #include<mutex>
@@ -36,7 +37,7 @@ class Map;
 class Frame;
 
 
-class MapPoint
+class ORB_SLAM2_EXPORT MapPoint
 {
 public:
     MapPoint(const cv::Mat &Pos, KeyFrame* pRefKF, Map* pMap);
@@ -78,7 +79,8 @@ public:
 
     float GetMinDistanceInvariance();
     float GetMaxDistanceInvariance();
-    int PredictScale(const float &currentDist, const float &logScaleFactor);
+    int PredictScale(const float &currentDist, KeyFrame*pKF);
+    int PredictScale(const float &currentDist, Frame* pF);
 
 public:
     long unsigned int mnId;

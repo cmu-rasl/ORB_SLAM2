@@ -24,6 +24,7 @@
 #include<fstream>
 #include<iomanip>
 #include<chrono>
+#include<thread>
 
 #include<opencv2/core/core.hpp>
 
@@ -59,7 +60,7 @@ int main(int argc, char **argv)
 
     cout << endl << "-------" << endl;
     cout << "Start processing sequence ..." << endl;
-    cout << "Images in the sequence: " << nImages << endl << endl;
+    cout << "Images in the sequence: " << nImages << endl << endl;   
 
     // Main loop
     cv::Mat imLeft, imRight;
@@ -84,7 +85,7 @@ int main(int argc, char **argv)
 #endif
 
         // Pass the images to the SLAM system
-        SLAM.TrackStereo(imLeft,imRight,tframe);        
+        SLAM.TrackStereo(imLeft,imRight,tframe);
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
@@ -104,7 +105,7 @@ int main(int argc, char **argv)
             T = tframe-vTimestamps[ni-1];
 
         if(ttrack<T)
-            usleep((T-ttrack)*1e6);
+            std::this_thread::sleep_for(std::chrono::microseconds((size_t)((T-ttrack)*1e6)));
     }
 
     // Stop all threads
