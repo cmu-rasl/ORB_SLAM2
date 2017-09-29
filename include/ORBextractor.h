@@ -25,11 +25,13 @@
 #include <vector>
 #include <list>
 #include <opencv/cv.h>
-#include <opencv2/core/cuda.hpp>
-#include <opencv2/cudafilters.hpp>
-#include <cuda/Fast.hpp>
-#include <cuda/Orb.hpp>
-
+#ifdef USE_CUDA
+    #include <opencv2/core/cuda.hpp>
+    #include <opencv2/cudafilters.hpp>
+    #include <cuda/Fast.hpp>
+    #include <cuda/Orb.hpp>
+#endif
+#include "orb_slam2_export.h"
 namespace ORB_SLAM2 {
 
 class ORB_SLAM2_EXPORT ExtractorNode
@@ -86,10 +88,14 @@ public:
         return mvInvLevelSigma2;
     }
 
-    // I assume all frames are of the same dimension
-    bool mvImagePyramidAllocatedFlag;
-    std::vector<cv::cuda::GpuMat>  mvImagePyramid;
-    std::vector<cv::cuda::GpuMat>  mvImagePyramidBorder;
+    #ifdef USE_CUDA
+        // I assume all frames are of the same dimension
+        bool mvImagePyramidAllocatedFlag;
+        std::vector<cv::cuda::GpuMat>  mvImagePyramid;
+        std::vector<cv::cuda::GpuMat>  mvImagePyramidBorder;
+    #elif
+        std::vector<cv::Mat> mvImagePyramid;
+    #endif
 
 
 protected:
@@ -101,8 +107,10 @@ protected:
 
     void ComputeKeyPointsOld(std::vector<std::vector<cv::KeyPoint> >& allKeypoints);
     std::vector<cv::Point> pattern;
-    cv::Ptr<cv::cuda::Filter> mpGaussianFilter;
-    cuda::Stream mcvStream;
+    #ifdef USE_CUDA
+        cv::Ptr<cv::cuda::Filter> mpGaussianFilter;
+        cuda::Stream mcvStream;
+    #endif
 
     int nfeatures;
     double scaleFactor;
@@ -118,10 +126,11 @@ protected:
     std::vector<float> mvInvScaleFactor;
     std::vector<float> mvLevelSigma2;
     std::vector<float> mvInvLevelSigma2;
-
-    cuda::GpuFast gpuFast;
-    cuda::IC_Angle ic_angle;
-    cuda::GpuOrb gpuOrb;
+    #ifdef USE_CUDA
+        cuda::GpuFast gpuFast;
+        cuda::IC_Angle ic_angle;
+        cuda::GpuOrb gpuOrb;
+    #endif
 };
 
 }  /* namespace ORB_SLAM2 */
