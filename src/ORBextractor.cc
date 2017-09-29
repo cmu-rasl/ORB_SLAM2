@@ -54,7 +54,6 @@
 */
 
 #include <vector>
-#include <opencv2/core.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -81,6 +80,86 @@ namespace ORB_SLAM2 {
 const int PATCH_SIZE = 31;
 const int HALF_PATCH_SIZE = 15;
 const int EDGE_THRESHOLD = 19;
+
+#ifndef USE_CUDA
+    static float IC_Angle(const Mat &image, Point2f pt, const vector<int> &u_max)
+    {
+        int m_01 = 0, m_10 = 0;
+
+        const uchar *center = &image.at<uchar>(cvRound(pt.y), cvRound(pt.x));
+
+        // Treat the center line differently, v=0
+        for (int u = -HALF_PATCH_SIZE; u <= HALF_PATCH_SIZE; ++u)
+            m_10 += u * center[u];
+
+        // Go line by line in the circuI853lar patch
+        int step = (int)image.step1();
+        for (int v = 1; v <= HALF_PATCH_SIZE; ++v)
+        {
+            // Proceed over the two lines
+            int v_sum = 0;
+            int d = u_max[v];
+            for (int u = -d; u <= d; ++u)
+            {
+                int val_plus = center[u + v * step], val_minus = center[u - v * step];
+                v_sum += (val_plus - val_minus);
+                m_10 += u * (val_plus + val_minus);
+            }
+            m_01 += v * v_sum;
+        }
+
+        return fastAtan2((float)m_01, (float)m_10);
+    }
+
+    const float factorPI = (float)(CV_PI / 180.f);
+    static void computeOrbDescriptor(const KeyPoint &kpt,
+                                    const Mat &img, const Point *pattern,
+                                    uchar *desc)
+    {
+        float angle = (float)kpt.angle * factorPI;
+        float a = (float)cos(angle), b = (float)sin(angle);
+
+        const uchar *center = &img.at<uchar>(cvRound(kpt.pt.y), cvRound(kpt.pt.x));
+        const int step = (int)img.step;
+
+    #define GET_VALUE(idx)                                               \
+        center[cvRound(pattern[idx].x * b + pattern[idx].y * a) * step + \
+            cvRound(pattern[idx].x * a - pattern[idx].y * b)]
+
+        for (int i = 0; i < 32; ++i, pattern += 16)
+        {
+            int t0, t1, val;
+            t0 = GET_VALUE(0);
+            t1 = GET_VALUE(1);
+            val = t0 < t1;
+            t0 = GET_VALUE(2);
+            t1 = GET_VALUE(3);
+            val |= (t0 < t1) << 1;
+            t0 = GET_VALUE(4);
+            t1 = GET_VALUE(5);
+            val |= (t0 < t1) << 2;
+            t0 = GET_VALUE(6);
+            t1 = GET_VALUE(7);
+            val |= (t0 < t1) << 3;
+            t0 = GET_VALUE(8);
+            t1 = GET_VALUE(9);
+            val |= (t0 < t1) << 4;
+            t0 = GET_VALUE(10);
+            t1 = GET_VALUE(11);
+            val |= (t0 < t1) << 5;
+            t0 = GET_VALUE(12);
+            t1 = GET_VALUE(13);
+            val |= (t0 < t1) << 6;
+            t0 = GET_VALUE(14);
+            t1 = GET_VALUE(15);
+            val |= (t0 < t1) << 7;
+
+            desc[i] = (uchar)val;
+        }
+
+    #undef GET_VALUE
+    }
+#endif
 
 static int bit_pattern_31_[256*4] =
 {
@@ -763,7 +842,7 @@ void ORBextractor::ComputeKeyPointsOctTree(vector<vector<KeyPoint>>& allKeypoint
         ic_angle.launch_async(gMat, allKeypoints[nlevels-1].data(), allKeypoints[nlevels-1].size(), HALF_PATCH_SIZE, minBorderX, minBorderY, nlevels-1, PATCH_SIZE * mvScaleFactor[nlevels-1]);
         mpGaussianFilter->apply(gMat, gMat, ic_angle.cvStream());
         ic_angle.join(allKeypoints[nlevels-1].data(), allKeypoints[nlevels-1].size());
-    #elif
+    #else
         const float W = 30;
         for (int level = 0; level < nlevels; ++level)
         {
@@ -1093,7 +1172,7 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
                 vector<KeyPoint> &keypoints = allKeypoints[level + 1];
                 gpuOrb.launch_async(mvImagePyramid[level + 1], keypoints.data(), keypoints.size());
             }
-        #elif
+        #else
             Mat workingMat = mvImagePyramid[level].clone();
             GaussianBlur(workingMat, workingMat, Size(7, 7), 2, 2, BORDER_REFLECT_101);
 
@@ -1116,7 +1195,9 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
         // And add the keypoints to the output
         _keypoints.insert(_keypoints.end(), keypoints.begin(), keypoints.end());
     }
-    POP_RANGE;
+    #ifdef USE_CUDA
+        POP_RANGE;
+    #endif
 }
 
 void ORBextractor::ComputePyramid(Mat image) {
@@ -1154,7 +1235,7 @@ void ORBextractor::ComputePyramid(Mat image) {
             }
         }
         mcvStream.waitForCompletion();
-  #elif
+  #else
     for (int level = 0; level < nlevels; ++level)
     {
         float scale = mvInvScaleFactor[level];

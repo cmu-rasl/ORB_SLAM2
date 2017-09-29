@@ -144,6 +144,7 @@ else(USE_CUDA)
         message(FATAL_ERROR "OpenCV > 2.4.3 not found.")
     endif()
   endif()
+  message("OpenCV include dirs are ${OpenCV_INCLUDE_DIRS}")
   # DBoW2 target
   add_subdirectory(${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/)
   # g2o target

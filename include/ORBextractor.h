@@ -93,7 +93,7 @@ public:
         bool mvImagePyramidAllocatedFlag;
         std::vector<cv::cuda::GpuMat>  mvImagePyramid;
         std::vector<cv::cuda::GpuMat>  mvImagePyramidBorder;
-    #elif
+    #else
         std::vector<cv::Mat> mvImagePyramid;
     #endif
 

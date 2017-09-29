@@ -82,10 +82,15 @@ int main(int argc, char **argv)
         std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
 #endif
 
-        PUSH_RANGE("Track image", 4);
+        #ifdef USE_CUDA
+            PUSH_RANGE("Track image", 4);
+        #endif
+
         // Pass the image to the SLAM system
         SLAM.TrackMonocular(im,tframe);
-        POP_RANGE;
+        #ifdef USE_CUDA
+            POP_RANGE;
+        #endif
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();

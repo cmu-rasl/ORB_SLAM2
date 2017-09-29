@@ -279,7 +279,9 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
 
 void Tracking::Track()
 {
-    PUSH_RANGE("Tracking::Track()", 2);
+    #ifdef USE_CUDA
+        PUSH_RANGE("Tracking::Track()", 2);
+    #endif
     if(mState==NO_IMAGES_YET)
     {
         mState = NOT_INITIALIZED;
@@ -520,8 +522,9 @@ void Tracking::Track()
         mlFrameTimes.push_back(mlFrameTimes.back());
         mlbLost.push_back(mState==LOST);
     }
-
-    POP_RANGE;
+    #ifdef USE_CUDA
+        POP_RANGE;
+    #endif
 }
 
 

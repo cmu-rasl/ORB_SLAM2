@@ -570,7 +570,7 @@ void Frame::ComputeStereoMatches()
             #ifdef USE_CUDA
                 cv::cuda::GpuMat gMat = mpORBextractorLeft->mvImagePyramid[kpL.octave].rowRange(scaledvL - w, scaledvL + w + 1).colRange(scaleduL - w, scaleduL + w + 1);
                 cv::Mat IL(gMat.rows, gMat.cols, gMat.type(), gMat.data, gMat.step);
-            #elif
+            #else
                 cv::Mat IL = mpORBextractorLeft->mvImagePyramid[kpL.octave].rowRange(scaledvL-w,scaledvL+w+1).colRange(scaleduL-w,scaleduL+w+1);
             #endif
             IL.convertTo(IL,CV_32F);
@@ -592,7 +592,7 @@ void Frame::ComputeStereoMatches()
                 #ifdef USE_CUDA
                     cv::cuda::GpuMat gMat = mpORBextractorRight->mvImagePyramid[kpL.octave].rowRange(scaledvL - w, scaledvL + w + 1).colRange(scaleduR0 + incR - w, scaleduR0 + incR + w + 1);
                     cv::Mat IR(gMat.rows, gMat.cols, gMat.type(), gMat.data, gMat.step);
-                #elif
+                #else
                     cv::Mat IR = mpORBextractorRight->mvImagePyramid[kpL.octave].rowRange(scaledvL-w,scaledvL+w+1).colRange(scaleduR0+incR-w,scaleduR0+incR+w+1);
                 #endif
                 IR.convertTo(IR,CV_32F);

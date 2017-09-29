@@ -63,11 +63,14 @@ int main(int argc, char **argv)
       if (tframe > ttl) {
         break;
       }
-
-      PUSH_RANGE("Track image", 4);
+      #ifdef USE_CUDA
+        PUSH_RANGE("Track image", 4);
+      #endif
       // Pass the image to the SLAM system
       SLAM.TrackMonocular(im,tframe);
-      POP_RANGE;
+      #ifdef USE_CUDA
+        POP_RANGE;
+      #endif
       SET_CLOCK(t2);
 
       double trackTime = TIME_DIFF(t2, t1);
