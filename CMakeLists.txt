@@ -76,9 +76,8 @@ if(USE_CUDA)
     ${EIGEN3_INCLUDE_DIR}
     ${Pangolin_INCLUDE_DIRS}
     ${OpenCV_INCLUDE_DIRS}
+    ${PROJECT_BINARY_DIR}
   )
-
-  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY lib)
 
   cuda_include_directories(
     ${CUDA_TOOLKIT_ROOT_DIR}/samples/common/inc
@@ -119,8 +118,10 @@ if(USE_CUDA)
     nvToolsExt
   )
 
+  # Build the gpu example
+  add_executable(tx1 tx1.cpp)
+  target_link_libraries(tx1 ${PROJECT_NAME})
   
-  add_subdirectory(gpu)
 
 # Don't use CUDA, build with CPU only
 else(USE_CUDA)
