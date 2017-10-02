@@ -60,6 +60,10 @@ endif(USE_VIEWER)
 
 find_package(Eigen3 3.1.0 REQUIRED)
 
+# DBoW2 target
+add_subdirectory(${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/)
+# g2o target
+add_subdirectory(${PROJECT_SOURCE_DIR}/Thirdparty/g2o/)
 
 if(USE_CUDA)
   set(OpenCV_DIR "$ENV{OpenCV_DIR}")
