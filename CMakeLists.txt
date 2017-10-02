@@ -118,11 +118,6 @@ if(USE_CUDA)
     nvToolsExt
   )
 
-  # Build the gpu example
-  add_executable(tx1 tx1.cpp)
-  target_link_libraries(tx1 ${PROJECT_NAME})
-  
-
 # Don't use CUDA, build with CPU only
 else(USE_CUDA)
   find_package(OpenCV 3.0 QUIET)
@@ -251,6 +246,12 @@ else(NO_EXAMPLES)
 
   add_executable(mono_euroc  Examples/Monocular/mono_euroc.cc)
   target_link_libraries(mono_euroc ${PROJECT_NAME})
+
+  if(USE_CUDA)
+    # Build the gpu example
+    add_executable(tx1 gpu/tx1.cpp)
+    target_link_libraries(tx1 ${PROJECT_NAME})
+  endif()
 endif(NO_EXAMPLES)
 
 install(TARGETS 
