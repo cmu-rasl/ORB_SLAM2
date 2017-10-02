@@ -33,6 +33,7 @@
 #include"Converter.h"
 #include"Map.h"
 #include"Initializer.h"
+#include <Utils.hpp>
 
 #include"Optimizer.h"
 #include"PnPsolver.h"
