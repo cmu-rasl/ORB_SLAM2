@@ -114,29 +114,12 @@ if(USE_CUDA)
     ${OpenCV_LIBS}
     ${EIGEN3_LIBS}
     ${Pangolin_LIBRARIES}
-    ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/libDBoW2.so
-    ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/libg2o.so
+    DBoW2
+    g2o
     nvToolsExt
   )
 
-  # Build examples
-  if(NO_EXAMPLES)
-    message(STATUS "Don't build examples")
-  else ()
-    message(STATUS "Build examples")
-
-    add_executable(rgbd_tum Examples/RGB-D/rgbd_tum.cc)
-    target_link_libraries(rgbd_tum ${PROJECT_NAME})
-
-    add_executable(stereo_kitti Examples/Stereo/stereo_kitti.cc)
-    target_link_libraries(stereo_kitti ${PROJECT_NAME})
-
-    add_executable(mono_tum Examples/Monocular/mono_tum.cc)
-    target_link_libraries(mono_tum ${PROJECT_NAME})
-
-    add_executable(mono_kitti Examples/Monocular/mono_kitti.cc)
-    target_link_libraries(mono_kitti ${PROJECT_NAME})
-  endif() # Build Examples
+  
   add_subdirectory(gpu)
 
 # Don't use CUDA, build with CPU only
@@ -228,50 +211,50 @@ else(USE_CUDA)
       g2o
     )
   endif(USE_VIEWER)
-
-  include(GenerateExportHeader)
-  set_target_properties(ORB_SLAM2 PROPERTIES CXX_VISIBILITY_PRESET hidden)
-  set_target_properties(ORB_SLAM2 PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
-  generate_export_header(ORB_SLAM2)
-
-  install(TARGETS ORB_SLAM2
-    RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
-  install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ORB_SLAM2/
-    FILES_MATCHING PATTERN "*.h")
-  install(FILES ${PROJECT_BINARY_DIR}/orb_slam2_export.h 
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ORB_SLAM2/)
-
-  # Build examples
-  add_executable(rgbd_tum
-  Examples/RGB-D/rgbd_tum.cc)
-  target_link_libraries(rgbd_tum ORB_SLAM2)
-
-  add_executable(stereo_kitti
-  Examples/Stereo/stereo_kitti.cc)
-  target_link_libraries(stereo_kitti ORB_SLAM2)
-
-  add_executable(stereo_euroc
-  Examples/Stereo/stereo_euroc.cc)
-  target_link_libraries(stereo_euroc ${PROJECT_NAME})
-
-  add_executable(mono_tum
-  Examples/Monocular/mono_tum.cc)
-  target_link_libraries(mono_tum ORB_SLAM2)
-  
-  add_executable(mono_kitti
-  Examples/Monocular/mono_kitti.cc)
-  target_link_libraries(mono_kitti ORB_SLAM2)
-
-  install(TARGETS 
-      rgbd_tum
-      stereo_kitti
-      mono_tum
-      mono_kitti
-    RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
-  add_executable(mono_euroc
-  Examples/Monocular/mono_euroc.cc)
-  target_link_libraries(mono_euroc ${PROJECT_NAME})
 endif(USE_CUDA)
+
+#Install steps
+
+include(GenerateExportHeader)
+set_target_properties(ORB_SLAM2 PROPERTIES CXX_VISIBILITY_PRESET hidden)
+set_target_properties(ORB_SLAM2 PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
+generate_export_header(ORB_SLAM2)
+
+install(TARGETS ORB_SLAM2
+  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ORB_SLAM2/
+  FILES_MATCHING PATTERN "*.h")
+install(FILES ${PROJECT_BINARY_DIR}/orb_slam2_export.h 
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ORB_SLAM2/)
+
+# Build examples
+if(NO_EXAMPLES)
+  message(STATUS "Don't build examples")
+else(NO_EXAMPLES)
+  message(STATUS "Build examples")
+
+  add_executable(rgbd_tum Examples/RGB-D/rgbd_tum.cc)
+  target_link_libraries(rgbd_tum ${PROJECT_NAME})
+
+  add_executable(stereo_kitti Examples/Stereo/stereo_kitti.cc)
+  target_link_libraries(stereo_kitti ${PROJECT_NAME})
+
+  add_executable(mono_tum Examples/Monocular/mono_tum.cc)
+  target_link_libraries(mono_tum ${PROJECT_NAME})
+
+  add_executable(mono_kitti Examples/Monocular/mono_kitti.cc)
+  target_link_libraries(mono_kitti ${PROJECT_NAME})
+
+  add_executable(mono_euroc  Examples/Monocular/mono_euroc.cc)
+  target_link_libraries(mono_euroc ${PROJECT_NAME})
+endif(NO_EXAMPLES)
+
+install(TARGETS 
+    rgbd_tum
+    stereo_kitti
+    mono_tum
+    mono_kitti
+  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
