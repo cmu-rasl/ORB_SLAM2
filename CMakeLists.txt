@@ -128,11 +128,6 @@ else(USE_CUDA)
     endif()
   endif()
   message("OpenCV include dirs are ${OpenCV_INCLUDE_DIRS}")
-  # DBoW2 target
-  add_subdirectory(${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/)
-  # g2o target
-  add_subdirectory(${PROJECT_SOURCE_DIR}/Thirdparty/g2o/)
-
   if(USE_VIEWER)
     add_library(ORB_SLAM2 SHARED
       src/System.cc
