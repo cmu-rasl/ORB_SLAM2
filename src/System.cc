@@ -322,7 +322,7 @@ void System::Shutdown()
     {
         mpViewer->RequestFinish();
         while(!mpViewer->isFinished())
-            usleep(5000);
+            std::this_thread::sleep_for(std::chrono::microseconds(5000));
     }
 #endif
     // Wait until all thread have effectively stopped
@@ -330,13 +330,8 @@ void System::Shutdown()
     {
         std::this_thread::sleep_for(std::chrono::microseconds(5000));
     }
-    // Carefully handle threads
-    
-    mptLoopClosing->join();
-    mptLocalMapping->join();
 
 #ifdef USE_VIEWER
-    mptViewer->join();
     if(mpViewer)
         pangolin::BindToContext("ORB-SLAM2: Map Viewer");
 #endif

@@ -1528,10 +1528,6 @@ bool Tracking::Relocalization()
 
 void Tracking::Reset()
 {
-    #ifdef USE_VIEWER
-        mpViewer->RequestStop();
-    #endif
-
     cout << "System Reseting" << endl;
     #ifdef USE_VIEWER
     if(mpViewer)
