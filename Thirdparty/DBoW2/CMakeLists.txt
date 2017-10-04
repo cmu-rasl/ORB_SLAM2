@@ -24,12 +24,10 @@ set(SRCS_DUTILS
   DUtils/Random.cpp
   DUtils/Timestamp.cpp)
 
-find_package(OpenCV 3.0 QUIET)
+set(OpenCV_DIR "$ENV{OpenCV_DIR}")
+find_package(OpenCV 3.3.0 REQUIRED)
 if(NOT OpenCV_FOUND)
-   find_package(OpenCV 2.4.3 QUIET)
-   if(NOT OpenCV_FOUND)
-      message(FATAL_ERROR "OpenCV > 2.4.3 not found.")
-   endif()
+  message(FATAL_ERROR "OpenCV 3.3.0 not found.")
 endif()
 
 add_library(DBoW2 SHARED ${SRCS_DBOW2} ${SRCS_DUTILS})
