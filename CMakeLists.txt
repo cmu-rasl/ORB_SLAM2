@@ -120,14 +120,13 @@ if(USE_CUDA)
 
 # Don't use CUDA, build with CPU only
 else(USE_CUDA)
-  find_package(OpenCV 3.0 QUIET)
+  set(OpenCV_DIR "$ENV{OpenCV_DIR}")
+  find_package(OpenCV 3.3.0 REQUIRED)
   if(NOT OpenCV_FOUND)
-    find_package(OpenCV 2.4.3 QUIET)
-    if(NOT OpenCV_FOUND)
-        message(FATAL_ERROR "OpenCV > 2.4.3 not found.")
-    endif()
+     message(FATAL_ERROR "OpenCV 3.3.0 not found.")
   endif()
   message("OpenCV include dirs are ${OpenCV_INCLUDE_DIRS}")
+
   if(USE_VIEWER)
     add_library(ORB_SLAM2 SHARED
       src/System.cc
