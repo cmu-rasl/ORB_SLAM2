@@ -223,10 +223,12 @@ cv::Mat System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const doub
 
     cv::Mat Tcw = mpTracker->GrabImageRGBD(im,depthmap,timestamp);
 
-    unique_lock<mutex> lock2(mMutexState);
-    mTrackingState = mpTracker->mState;
-    mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
-    mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
+    //@KSS - This mutex gets called repeatedly and causes crashes when called from a ROS context, unclear why
+    // However, these members are not used anywhere in the code so, meh.
+    // unique_lock<mutex> lock2(mMutexState);
+    // mTrackingState = mpTracker->mState;
+    // mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
+    // mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
     return Tcw;
 }
 
