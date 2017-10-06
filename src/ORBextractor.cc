@@ -451,7 +451,10 @@ ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
     #ifdef USE_CUDA
         // Postpone the allocation of the Pyramids to the time we process the first frame.
         mvImagePyramidAllocatedFlag = false;
+    #else
+        mvImagePyramid.resize(nlevels);
     #endif
+
 
     mnFeaturesPerLevel.resize(nlevels);
     float factor = 1.0f / scaleFactor;
