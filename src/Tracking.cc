@@ -21,14 +21,19 @@
 
 #include "Tracking.h"
 
-#include<opencv2/core/core.hpp>
-#include<opencv2/features2d/features2d.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/features2d/features2d.hpp>
+#include <iostream>
+#include <mutex>
 
 #include"ORBmatcher.h"
-#include"FrameDrawer.h"
+#ifdef USE_VIEWER
+    #include"FrameDrawer.h"
+#endif
 #include"Converter.h"
 #include"Map.h"
 #include"Initializer.h"
+#include <Utils.hpp>
 
 #include"Optimizer.h"
 #include"PnPsolver.h"
@@ -36,17 +41,24 @@
 #include<iostream>
 
 #include<mutex>
-
+#include <chrono>
+#include <thread>
 
 using namespace std;
 
 namespace ORB_SLAM2
 {
-
+#ifdef USE_VIEWER
 Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Map *pMap, KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor):
     mState(NO_IMAGES_YET), mSensor(sensor), mbOnlyTracking(false), mbVO(false), mpORBVocabulary(pVoc),
-    mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer*>(NULL)), mpSystem(pSys),
+    mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer*>(NULL)), mpSystem(pSys), mpViewer(NULL),
     mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpMap(pMap), mnLastRelocFrameId(0)
+#else
+    Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, Map *pMap, KeyFrameDatabase* pKFDB, const string &strSettingPath, const int sensor):
+    mState(NO_IMAGES_YET), mSensor(sensor), mbOnlyTracking(false), mbVO(false), mpORBVocabulary(pVoc),
+    mpKeyFrameDB(pKFDB), mpInitializer(static_cast<Initializer*>(NULL)), mpSystem(pSys),
+    mpMap(pMap), mnLastRelocFrameId(0)
+#endif
 {
     // Load camera parameters from settings file
 
@@ -158,10 +170,12 @@ void Tracking::SetLoopClosing(LoopClosing *pLoopClosing)
     mpLoopClosing=pLoopClosing;
 }
 
-void Tracking::SetViewer(Viewer *pViewer)
-{
-    mpViewer=pViewer;
-}
+#ifdef USE_VIEWER
+    void Tracking::SetViewer(Viewer *pViewer)
+    {
+        mpViewer=pViewer;
+    }
+#endif
 
 
 cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp)
@@ -266,6 +280,9 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
 
 void Tracking::Track()
 {
+    #ifdef USE_CUDA
+        PUSH_RANGE("Tracking::Track()", 2);
+    #endif
     if(mState==NO_IMAGES_YET)
     {
         mState = NOT_INITIALIZED;
@@ -282,8 +299,9 @@ void Tracking::Track()
             StereoInitialization();
         else
             MonocularInitialization();
-
-        mpFrameDrawer->Update(this);
+        #ifdef USE_VIEWER
+            mpFrameDrawer->Update(this);
+        #endif
 
         if(mState!=OK)
             return;
@@ -414,8 +432,10 @@ void Tracking::Track()
         else
             mState=LOST;
 
-        // Update drawer
-        mpFrameDrawer->Update(this);
+        #ifdef USE_VIEWER
+            // Update drawer
+            mpFrameDrawer->Update(this);
+        #endif
 
         // If tracking were good, check if we insert a keyframe
         if(bOK)
@@ -430,8 +450,9 @@ void Tracking::Track()
             }
             else
                 mVelocity = cv::Mat();
-
-            mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
+            #ifdef USE_VIEWER
+                mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
+            #endif
 
             // Clean VO matches
             for(int i=0; i<mCurrentFrame.N; i++)
@@ -502,7 +523,9 @@ void Tracking::Track()
         mlFrameTimes.push_back(mlFrameTimes.back());
         mlbLost.push_back(mState==LOST);
     }
-
+    #ifdef USE_CUDA
+        POP_RANGE;
+    #endif
 }
 
 
@@ -553,8 +576,9 @@ void Tracking::StereoInitialization()
         mpMap->SetReferenceMapPoints(mvpLocalMapPoints);
 
         mpMap->mvpKeyFrameOrigins.push_back(pKFini);
-
-        mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
+        #ifdef USE_VIEWER
+            mpMapDrawer->SetCurrentCameraPose(mCurrentFrame.mTcw);
+        #endif
 
         mState=OK;
     }
@@ -728,8 +752,9 @@ void Tracking::CreateInitialMapMonocular()
     mLastFrame = Frame(mCurrentFrame);
 
     mpMap->SetReferenceMapPoints(mvpLocalMapPoints);
-
-    mpMapDrawer->SetCurrentCameraPose(pKFcur->GetPose());
+    #ifdef USE_VIEWER
+        mpMapDrawer->SetCurrentCameraPose(pKFcur->GetPose());
+    #endif
 
     mpMap->mvpKeyFrameOrigins.push_back(pKFini);
 
@@ -1503,11 +1528,15 @@ bool Tracking::Relocalization()
 
 void Tracking::Reset()
 {
-    mpViewer->RequestStop();
-
     cout << "System Reseting" << endl;
-    while(!mpViewer->isStopped())
-        usleep(3000);
+    #ifdef USE_VIEWER
+    if(mpViewer)
+    {
+        mpViewer->RequestStop();
+        while(!mpViewer->isStopped())
+            usleep(3000);
+    }
+    #endif
 
     // Reset Local Mapping
     cout << "Reseting Local Mapper...";
@@ -1542,40 +1571,10 @@ void Tracking::Reset()
     mlFrameTimes.clear();
     mlbLost.clear();
 
-    mpViewer->Release();
-}
-
-void Tracking::ChangeCalibration(const string &strSettingPath)
-{
-    cv::FileStorage fSettings(strSettingPath, cv::FileStorage::READ);
-    float fx = fSettings["Camera.fx"];
-    float fy = fSettings["Camera.fy"];
-    float cx = fSettings["Camera.cx"];
-    float cy = fSettings["Camera.cy"];
-
-    cv::Mat K = cv::Mat::eye(3,3,CV_32F);
-    K.at<float>(0,0) = fx;
-    K.at<float>(1,1) = fy;
-    K.at<float>(0,2) = cx;
-    K.at<float>(1,2) = cy;
-    K.copyTo(mK);
-
-    cv::Mat DistCoef(4,1,CV_32F);
-    DistCoef.at<float>(0) = fSettings["Camera.k1"];
-    DistCoef.at<float>(1) = fSettings["Camera.k2"];
-    DistCoef.at<float>(2) = fSettings["Camera.p1"];
-    DistCoef.at<float>(3) = fSettings["Camera.p2"];
-    const float k3 = fSettings["Camera.k3"];
-    if(k3!=0)
-    {
-        DistCoef.resize(5);
-        DistCoef.at<float>(4) = k3;
-    }
-    DistCoef.copyTo(mDistCoef);
-
-    mbf = fSettings["Camera.bf"];
-
-    Frame::mbInitialComputations = true;
+    #ifdef USE_VIEWER
+    if(mpViewer)
+        mpViewer->Release();
+    #endif
 }
 
 void Tracking::InformOnlyTracking(const bool &flag)
