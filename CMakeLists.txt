@@ -83,40 +83,71 @@ if(USE_CUDA)
     ${CUDA_TOOLKIT_ROOT_DIR}/samples/common/inc
   )
 
-  cuda_add_library(${PROJECT_NAME} SHARED
-    src/System.cc
-    src/Tracking.cc
-    src/LocalMapping.cc
-    src/LoopClosing.cc
-    src/ORBextractor.cc
-    src/ORBmatcher.cc
-    src/FrameDrawer.cc
-    src/Converter.cc
-    src/MapPoint.cc
-    src/KeyFrame.cc
-    src/Map.cc
-    src/MapDrawer.cc
-    src/Optimizer.cc
-    src/PnPsolver.cc
-    src/Frame.cc
-    src/KeyFrameDatabase.cc
-    src/Sim3Solver.cc
-    src/Initializer.cc
-    src/Viewer.cc
-    src/cuda/Allocator_gpu.cu
-    src/cuda/Fast_gpu.cu
-    src/cuda/Orb_gpu.cu
-    src/cuda/Cuda.cu
-  )
-
-  target_link_libraries(${PROJECT_NAME}
-    ${OpenCV_LIBS}
-    ${EIGEN3_LIBS}
-    ${Pangolin_LIBRARIES}
-    DBoW2
-    g2o
-    nvToolsExt
-  )
+  if(USE_VIEWER)
+    cuda_add_library(${PROJECT_NAME} SHARED
+      src/System.cc
+      src/Tracking.cc
+      src/LocalMapping.cc
+      src/LoopClosing.cc
+      src/ORBextractor.cc
+      src/ORBmatcher.cc
+      src/FrameDrawer.cc
+      src/Converter.cc
+      src/MapPoint.cc
+      src/KeyFrame.cc
+      src/Map.cc
+      src/MapDrawer.cc
+      src/Optimizer.cc
+      src/PnPsolver.cc
+      src/Frame.cc
+      src/KeyFrameDatabase.cc
+      src/Sim3Solver.cc
+      src/Initializer.cc
+      src/Viewer.cc
+      src/cuda/Allocator_gpu.cu
+      src/cuda/Fast_gpu.cu
+      src/cuda/Orb_gpu.cu
+      src/cuda/Cuda.cu
+    )
+    target_link_libraries(${PROJECT_NAME}
+      ${OpenCV_LIBS}
+      ${EIGEN3_LIBS}
+      ${Pangolin_LIBRARIES}
+      DBoW2
+      g2o
+      nvToolsExt
+    )
+  else(USE_VIEWER)
+    cuda_add_library(${PROJECT_NAME} SHARED
+      src/System.cc
+      src/Tracking.cc
+      src/LocalMapping.cc
+      src/LoopClosing.cc
+      src/ORBextractor.cc
+      src/ORBmatcher.cc
+      src/Converter.cc
+      src/MapPoint.cc
+      src/KeyFrame.cc
+      src/Map.cc
+      src/Optimizer.cc
+      src/PnPsolver.cc
+      src/Frame.cc
+      src/KeyFrameDatabase.cc
+      src/Sim3Solver.cc
+      src/Initializer.cc
+      src/cuda/Allocator_gpu.cu
+      src/cuda/Fast_gpu.cu
+      src/cuda/Orb_gpu.cu
+      src/cuda/Cuda.cu
+    )
+    target_link_libraries(${PROJECT_NAME}
+      ${OpenCV_LIBS}
+      ${EIGEN3_LIBS}
+      DBoW2
+      g2o
+      nvToolsExt
+    )
+  endif(USE_VIEWER)
 
 # Don't use CUDA, build with CPU only
 else(USE_CUDA)
