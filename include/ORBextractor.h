@@ -47,7 +47,7 @@ public:
     bool bNoMore;
 };
 
-class ORBextractor
+class ORB_SLAM2_EXPORT ORBextractor
 {
 public:
 
